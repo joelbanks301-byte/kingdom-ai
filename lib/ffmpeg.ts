@@ -73,4 +73,64 @@ export async function createVideoFromImages(
 
   const data = await ff.readFile("output.mp4");
   return new Blob([data], { type: "video/mp4" });
-}
+}export async function makeMovieFromClips(
+  clips: File[] | Blob[],
+  music?: File | Blob,
+  onProgress?: (ratio: number) => void
+): Promise<Blob> {
+  const ff = await getFFmpeg(onProgress);
+
+  const clipNames: string[] = [];
+  for (let i = 0; i < clips.length; i++) {
+    const ext = clips[i].type.split("/")[1] || "mp4";
+    const filename = `clip${String(i).padStart(4, "0")}.${ext}`;
+    await ff.writeFile(filename, await fetchFile(clips[i]));
+    clipNames.push(filename);
+  }
+
+  const concatList = clipNames.map((name) => `file '${name}'`).join("\n");
+  await ff.writeFile("concat_list.txt", concatList);
+
+  await ff.exec([
+    "-f",
+    "concat",
+    "-safe",
+    "0",
+    "-i",
+    "concat_list.txt",
+    "-c:v",
+    "libx264",
+    "-c:a",
+    "aac",
+    "-pix_fmt",
+    "yuv420p",
+    "concatenated.mp4",
+  ]);
+
+  if (!music) {
+    const data = await ff.readFile("concatenated.mp4");
+    return new Blob([data], { type: "video/mp4" });
+  }
+
+  const musicExt = music.type.split("/")[1] || "mp3";
+  await ff.writeFile(`music.${musicExt}`, await fetchFile(music));
+
+  await ff.exec([
+    "-i",
+    "concatenated.mp4",
+    "-i",
+    `music.${musicExt}`,
+    "-filter_complex",
+    "[0:a][1:a]amix=inputs=2:duration=first:dropout_transition=2[aout]",
+    "-map",
+    "0:v",
+    "-map",
+    "[aout]",
+    "-c:v",
+    "copy",
+    "output.mp4",
+  ]);
+
+  const data = await ff.readFile("output.mp4");
+  return new Blob([data], { type: "video/mp4" });
+    }
