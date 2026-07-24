@@ -72,7 +72,7 @@ export async function createVideoFromImages(
   ]);
 
   const data = await ff.readFile("output.mp4");
-  return new Blob([data], { type: "video/mp4" });
+  return new Blob([new Uint8Array(data as Uint8Array)], { type: "video/mp4" });
 }
 
 export async function makeMovieFromClips(
@@ -111,7 +111,7 @@ export async function makeMovieFromClips(
 
   if (!music) {
     const data = await ff.readFile("concatenated.mp4");
-    return new Blob([data], { type: "video/mp4" });
+    return new Blob([new Uint8Array(data as Uint8Array)], { type: "video/mp4" });
   }
 
   const musicExt = music.type.split("/")[1] || "mp3";
@@ -134,5 +134,5 @@ export async function makeMovieFromClips(
   ]);
 
   const data = await ff.readFile("output.mp4");
-  return new Blob([data], { type: "video/mp4" });
+  return new Blob([new Uint8Array(data as Uint8Array)], { type: "video/mp4" });
                              }
