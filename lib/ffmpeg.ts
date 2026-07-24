@@ -1,4 +1,4 @@
-Frimport { FFmpeg } from "@ffmpeg/ffmpeg";
+import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile, toBlobURL } from "@ffmpeg/util";
 
 let ffmpeg: FFmpeg | null = null;
@@ -72,8 +72,10 @@ export async function createVideoFromImages(
   ]);
 
   const data = await ff.readFile("output.mp4");
-return new Blob([data], { type: ... })
-}export async function makeMovieFromClips(
+  return new Blob([data], { type: "video/mp4" });
+}
+
+export async function makeMovieFromClips(
   clips: File[] | Blob[],
   music?: File | Blob,
   onProgress?: (ratio: number) => void
@@ -132,5 +134,5 @@ return new Blob([data], { type: ... })
   ]);
 
   const data = await ff.readFile("output.mp4");
-  return new Blob([data.buffer], { type: ... })
-    }
+  return new Blob([data], { type: "video/mp4" });
+                             }
