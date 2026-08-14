@@ -62,7 +62,7 @@ const [videoUrl, setVideoUrl] = useState<string | null>(null);
       if (!finished) {
         throw new Error("This is taking longer than expected. Please check back shortly.");
       }
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message || "Something went wrong.");
     } finally {
       setIsProcessing(false);
