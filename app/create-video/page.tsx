@@ -6,8 +6,8 @@ export default function CreateVideoPage() {
   const [prompt, setPrompt] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
-  const [videoUrl, setVideoUrl] = useState(null);
-  const [error, setError] = useState(null);
+useState <string | null> (null)
+  const [error, setError] = useState<string | null>(null);
 
   async function handleGenerate() {
     if (!prompt.trim()) {
