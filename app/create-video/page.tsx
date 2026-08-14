@@ -21,8 +21,7 @@ export default function CreateVideoPage() {
     setStatusMessage("Starting your video...");
 
     try {
-      // Step 1: kick off the job on our secure server route
-      const createRes = await fetch("/api/generate-video", {
+      const createRes = await fetch("/api/video", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt }),
@@ -36,14 +35,13 @@ export default function CreateVideoPage() {
       const videoId = createData.id;
       setStatusMessage("Generating your video, this can take a minute or two...");
 
-      // Step 2: poll until the job is done
       let finished = false;
       let attempts = 0;
       while (!finished && attempts < 60) {
         await new Promise((r) => setTimeout(r, 5000));
         attempts++;
 
-        const statusRes = await fetch(`/api/video-status?id=${videoId}`);
+        const statusRes = await fetch(`/api/video?id=${videoId}`);
         const statusData = await statusRes.json();
 
         if (!statusRes.ok) {
@@ -52,7 +50,7 @@ export default function CreateVideoPage() {
 
         if (statusData.status === "completed") {
           finished = true;
-          setVideoUrl(`/api/video-status?id=${videoId}&download=1`);
+          setVideoUrl(`/api/video?id=${videoId}&download=1`);
           setStatusMessage("Done!");
         } else if (statusData.status === "failed") {
           throw new Error("Video generation failed. Try a different prompt.");
@@ -116,114 +114,5 @@ export default function CreateVideoPage() {
       )}
     </div>
   );
-  }
-        // File path in your repo: app/api/generate-video/route.js
-//
-// This runs on the server only. Your OPENAI_API_KEY never reaches
-// the browser or the public website — it stays hidden here.
-
-export async function POST(request) {
-  const apiKey = process.env.OPENAI_API_KEY;
-
-  if (!apiKey) {
-    return Response.json(
-      { error: "Server is missing OPENAI_API_KEY" },
-      { status: 500 }
-    );
-  }
-
-  try {
-    const { prompt } = await request.json();
-
-    if (!prompt || typeof prompt !== "string") {
-      return Response.json(
-        { error: "Missing 'prompt' in request body" },
-        { status: 400 }
-      );
-    }
-
-    const createResp = await fetch("https://api.openai.com/v1/videos", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "sora-2",
-        prompt: prompt,
-        seconds: "8",
-        size: "720x1280",
-      }),
-    });
-
-    const data = await createResp.json();
-
-    if (!createResp.ok) {
-      return Response.json({ error: data }, { status: createResp.status });
-    }
-
-    // Returns a job id + status. Frontend polls /api/video-status?id=... next.
-    return Response.json(data);
-  } catch (err) {
-    return Response.json({ error: err.message }, { status: 500 });
-  }
         }
-          // File path in your repo: app/api/video-status/route.js
-//
-// Checks job status. When ?download=1 is added and the video is ready,
-// this streams the actual MP4 file back through our server (so the
-// browser never needs direct access to OpenAI or your API key).
-
-export async function GET(request) {
-  const apiKey = process.env.OPENAI_API_KEY;
-  const { searchParams } = new URL(request.url);
-  const videoId = searchParams.get("id");
-  const wantsDownload = searchParams.get("download") === "1";
-
-  if (!apiKey) {
-    return Response.json(
-      { error: "Server is missing OPENAI_API_KEY" },
-      { status: 500 }
-    );
-  }
-  if (!videoId) {
-    return Response.json({ error: "Missing 'id' parameter" }, { status: 400 });
-  }
-
-  try {
-    if (wantsDownload) {
-      const contentResp = await fetch(
-        `https://api.openai.com/v1/videos/${videoId}/content`,
-        { headers: { Authorization: `Bearer ${apiKey}` } }
-      );
-
-      if (!contentResp.ok) {
-        const errData = await contentResp.json().catch(() => ({}));
-        return Response.json({ error: errData }, { status: contentResp.status });
-      }
-
-      return new Response(contentResp.body, {
-        status: 200,
-        headers: {
-          "Content-Type": "video/mp4",
-          "Cache-Control": "no-store",
-        },
-      });
-    }
-
-    const statusResp = await fetch(
-      `https://api.openai.com/v1/videos/${videoId}`,
-      { headers: { Authorization: `Bearer ${apiKey}` } }
-    );
-    const data = await statusResp.json();
-
-    if (!statusResp.ok) {
-      return Response.json({ error: data }, { status: statusResp.status });
-    }
-
-    return Response.json(data);
-  } catch (err) {
-    return Response.json({ error: err.message }, { status: 500 });
-  }
-}
-  
+               
